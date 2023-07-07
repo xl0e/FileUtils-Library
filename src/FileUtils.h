@@ -9,14 +9,36 @@
 #ifndef SDCARD_SS
 #define SDCARD_SS 15
 #endif
+#ifdef ESP8266
 #define SDCARD_CLK 14
 #define SDCARD_MOSI 13
 #define SDCARD_MISO 12
+#endif
 
 typedef void (*FileFunc)(File &file);
 
 class FileUtilsClass
 {
+public:
+  File readFile(String fileName)
+  {
+    init();
+    return SD.open(fileName, FILE_READ);
+  }
+
+  void removeFile(String fileName)
+  {
+    init();
+    SD.remove(fileName);
+  }
+
+  void iterateFiles(String dirName, FileFunc fileFunc)
+  {
+    init();
+    File dir = SD.open(dirName);
+    iterateRecursive(dir, fileFunc);
+  }
+
 private:
   bool inited = false;
   bool init()
@@ -58,28 +80,8 @@ private:
       entry.close();
     }
   }
-
-public:
-  File readFile(String fileName)
-  {
-    init();
-    return SD.open(fileName, FILE_READ);
-  }
-
-  void removeFile(String fileName)
-  {
-    init();
-    SD.remove(fileName);
-  }
-
-  void iterateFiles(String dirName, FileFunc fileFunc)
-  {
-    init();
-    File dir = SD.open(dirName);
-    iterateRecursive(dir, fileFunc);
-  }
 };
 
-extern FileUtilsClass FileUtils;
+FileUtilsClass FileUtils;
 
 #endif
