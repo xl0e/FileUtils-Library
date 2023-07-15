@@ -20,16 +20,34 @@ typedef void (*FileFunc)(File &file);
 class FileUtilsClass
 {
 public:
-  File readFile(String fileName)
+  File readFile(const String &fileName)
   {
     init();
     return SD.open(fileName, FILE_READ);
   }
 
-  void removeFile(String fileName)
+  File writeFile(const String &fileName)
+  {
+    init();
+    return SD.open(fileName, FILE_WRITE);
+  }
+
+  bool exists(const String &fileName)
+  {
+    init();
+    return SD.exists(fileName);
+  }
+
+  void removeFile(const String &fileName)
   {
     init();
     SD.remove(fileName);
+  }
+
+  void move(const String &fileFrom, const String &fileTo)
+  {
+    init();
+    SD.rename(fileFrom, fileTo);
   }
 
   void iterateFiles(String dirName, FileFunc fileFunc)
@@ -37,6 +55,13 @@ public:
     init();
     File dir = SD.open(dirName);
     iterateRecursive(dir, fileFunc);
+  }
+
+  bool hasFiles(const String &dirName)
+  {
+    init();
+    File dir = SD.open(dirName);
+    return hasFiles(dir);
   }
 
 private:
@@ -58,17 +83,11 @@ private:
     return true;
   }
 
-  void iterateRecursive(File dir, FileFunc fileFunc)
+  void iterateRecursive(File &dir, FileFunc fileFunc)
   {
-    while (true)
+    File entry;
+    while (entry = dir.openNextFile())
     {
-      File entry = dir.openNextFile();
-      if (!entry)
-      {
-        logger.println("no more files");
-        break;
-      }
-
       if (entry.isDirectory())
       {
         iterateRecursive(entry, fileFunc);
@@ -79,6 +98,22 @@ private:
       }
       entry.close();
     }
+  }
+
+  bool hasFiles(File &dir)
+  {
+    bool isDir = dir.isDirectory();
+    File entry;
+    while (isDir && (entry = dir.openNextFile()))
+    {
+      if (entry.isFile() || hasFiles(entry))
+      {
+        entry.close();
+        return true;
+      }
+      entry.close();
+    }
+    return false;
   }
 };
 
