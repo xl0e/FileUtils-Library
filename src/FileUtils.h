@@ -6,6 +6,18 @@
 #include <SD.h>
 #include <Logger.h>
 
+#if defined (ESP32)
+  bool isFile(File &f)
+  {
+    return f && !f.isDirectory();
+  }
+#else
+  bool isFile(File &f)
+  {
+    return f.isFile();
+  }
+#endif
+
 #ifndef SDCARD_SS
 #define SDCARD_SS 15
 #endif
@@ -106,7 +118,7 @@ private:
     File entry;
     while (isDir && (entry = dir.openNextFile()))
     {
-      if (entry.isFile() || hasFiles(entry))
+      if (isFile(entry) || hasFiles(entry))
       {
         entry.close();
         return true;
